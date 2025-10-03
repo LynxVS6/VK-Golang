@@ -11,7 +11,7 @@ type gameCase struct {
 }
 
 var game0cases = [][]gameCase{
-	[]gameCase{
+	{
 		{1, "осмотреться", "ты находишься на кухне, на столе: чай, надо собрать рюкзак и идти в универ. можно пройти - коридор"}, // действие осмотреться
 		{2, "идти коридор", "ничего интересного. можно пройти - кухня, комната, улица"},                                          // действие идти
 		{3, "идти комната", "ты в своей комнате. можно пройти - коридор"},
@@ -24,7 +24,7 @@ var game0cases = [][]gameCase{
 		{10, "идти улица", "на улице весна. можно пройти - домой"},
 	},
 
-	[]gameCase{
+	{
 		{1, "осмотреться", "ты находишься на кухне, на столе: чай, надо собрать рюкзак и идти в универ. можно пройти - коридор"},
 		{2, "завтракать", "неизвестная команда"},  // придётся топать в универ голодным :(
 		{3, "идти комната", "нет пути в комната"}, // через стены ходить нельзя
@@ -66,5 +66,79 @@ func TestGame0(t *testing.T) {
 			}
 		}
 	}
+}
 
+func TestEdgeCases(t *testing.T) {
+	initGame()
+	// empty command
+	if handleCommand("") != "неизвестная команда" {
+		t.Fatalf("expected unknown for empty command")
+	}
+	// unknown verb
+	if handleCommand("foo bar") != "неизвестная команда" {
+		t.Fatalf("expected unknown for unknown verb")
+	}
+	// apply without item
+	initGame()
+	if handleCommand("применить ") != "неизвестная команда" {
+		t.Fatalf("expected unknown for apply without args")
+	}
+	// try to open door twice: second time should say already open only after opening
+	initGame()
+	// go to room, wear backpack, take keys, go back to corridor and open door
+	handleCommand("идти коридор")
+	handleCommand("идти комната")
+	handleCommand("надеть рюкзак")
+	handleCommand("взять ключи")
+	handleCommand("идти коридор")
+	res := handleCommand("применить ключи дверь")
+	if res != "дверь открыта" {
+		t.Fatalf("expected дверь открыта, got %s", res)
+	}
+	res2 := handleCommand("применить ключи дверь")
+	if res2 != "дверь уже открыта" {
+		t.Fatalf("expected дверь уже открыта, got %s", res2)
+	}
+}
+
+func TestMoreEdgeCases(t *testing.T) {
+	// missing args for взять/надеть
+	initGame()
+	if handleCommand("взять") != "неизвестная команда" {
+		t.Fatalf("expected unknown for 'взять' without args")
+	}
+	if handleCommand("надеть") != "неизвестная команда" {
+		t.Fatalf("expected unknown for 'надеть' without args")
+	}
+
+	// duplicate take
+	initGame()
+	handleCommand("идти коридор")
+	handleCommand("идти комната")
+	handleCommand("надеть рюкзак")
+	res := handleCommand("взять ключи")
+	if res != "предмет добавлен в инвентарь: ключи" {
+		t.Fatalf("expected to take keys first time, got %s", res)
+	}
+	res2 := handleCommand("взять ключи")
+	if res2 != "нет такого" {
+		t.Fatalf("expected 'нет такого' when taking same item twice, got %s", res2)
+	}
+
+	// wrong apply target
+	initGame()
+	handleCommand("идти коридор")
+	handleCommand("идти комната")
+	handleCommand("надеть рюкзак")
+	handleCommand("взять ключи")
+	handleCommand("идти коридор")
+	if handleCommand("применить ключи шкаф") != "не к чему применить" {
+		t.Fatalf("expected 'не к чему применить' for wrong target")
+	}
+
+	// non-existent exit
+	initGame()
+	if handleCommand("идти лево") != "нет пути в лево" {
+		t.Fatalf("expected 'нет пути в лево' for moving to unknown exit")
+	}
 }

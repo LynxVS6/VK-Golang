@@ -25,11 +25,8 @@ func (s *GameService) Handle(raw string) string {
 	switch cmd.Name {
 	case "осмотреться":
 		return g.Current.LookDescFn(g)
-	case "идти":
-		if cmd.P1 == "" {
-			return "неизвестная команда"
-		}
 
+	case "идти":
 		if g.Current.Name == "коридор" && cmd.P1 == "улица" && !g.DoorOpened {
 			return "дверь закрыта"
 		}
@@ -42,14 +39,19 @@ func (s *GameService) Handle(raw string) string {
 		return next.EnterDescFn(g)
 
 	case "надеть":
+		if cmd.P1 == "" {
+			return "неизвестная команда"
+		}
 		if cmd.P1 != "рюкзак" {
 			return "нет такого"
 		}
-		if g.Current.Items != nil && g.Current.Items["рюкзак"] {
-			delete(g.Current.Items, "рюкзак")
-			g.BackpackOn = true
-			s.repo.Save(g)
-			return "вы надели: рюкзак"
+		for _, items := range g.Current.Items {
+			if items != nil && items["рюкзак"] {
+				delete(items, "рюкзак")
+				g.BackpackOn = true
+				s.repo.Save(g)
+				return "вы надели: рюкзак"
+			}
 		}
 		return "нет такого"
 
@@ -60,12 +62,16 @@ func (s *GameService) Handle(raw string) string {
 		if !g.BackpackOn {
 			return "некуда класть"
 		}
-		if !(g.Current.Items != nil && g.Current.Items[cmd.P1]) {
-			return "нет такого"
+		found := false
+		for _, items := range g.Current.Items {
+			if items != nil && items[cmd.P1] {
+				delete(items, cmd.P1)
+				found = true
+				break
+			}
 		}
-		delete(g.Current.Items, cmd.P1)
-		if g.Inventory == nil {
-			g.Inventory = map[string]bool{}
+		if !found {
+			return "нет такого"
 		}
 		g.Inventory[cmd.P1] = true
 		s.repo.Save(g)

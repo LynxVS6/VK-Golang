@@ -29,20 +29,31 @@ func Build() *entities.Game {
 	street.NeighborsOrder = []string{"домой"}
 
 	// предметы
-	kitchen.Items = map[string]bool{"чай": true}
-	room.Items = map[string]bool{"ключи": true, "конспекты": true, "рюкзак": true}
-	corridor.Items = map[string]bool{}
-	street.Items = map[string]bool{}
+	kitchen.Items = map[string]map[string]bool{"столе": {"чай": true}}
+	kitchen.ItemsOrder = []string{"столе"}
+
+	room.Items = map[string]map[string]bool{"столе": {"ключи": true, "конспекты": true}, "стуле": {"рюкзак": true}}
+	room.ItemsOrder = []string{"столе", "стуле"}
+
+	corridor.Items = map[string]map[string]bool{}
+	corridor.ItemsOrder = nil
+
+	street.Items = map[string]map[string]bool{}
+	street.ItemsOrder = nil
 
 	// описания
 	kitchen.EnterDescFn = func(gm *entities.Game) string {
 		return "кухня, ничего интересного. " + kitchen.CanGoText()
 	}
 	kitchen.LookDescFn = func(gm *entities.Game) string {
-		if !gm.BackpackOn {
-			return "ты находишься на кухне, на столе: чай, надо собрать рюкзак и идти в универ. " + kitchen.CanGoText()
+		need := "надо собрать рюкзак и идти в универ."
+		if gm.BackpackOn && gm.Inventory["ключи"] && gm.Inventory["конспекты"] {
+			need = "надо идти в универ."
 		}
-		return "ты находишься на кухне, на столе: чай, надо идти в универ. " + kitchen.CanGoText()
+		if hasAnyItems(kitchen) {
+			return "ты находишься на кухне, " + contentsLine(kitchen) + ", " + need + " " + kitchen.CanGoText()
+		}
+		return "пустая комната, " + need + " " + kitchen.CanGoText()
 	}
 
 	corridor.EnterDescFn = func(gm *entities.Game) string {
@@ -54,37 +65,25 @@ func Build() *entities.Game {
 		return "ты в своей комнате. " + room.CanGoText()
 	}
 	room.LookDescFn = func(gm *entities.Game) string {
-		hasB := room.Items["рюкзак"]
-		hasK := room.Items["ключи"]
-		hasN := room.Items["конспекты"]
-		switch {
-		case hasB && hasK && hasN:
-			return "на столе: ключи, конспекты, на стуле: рюкзак. " + room.CanGoText()
-		case !hasB && hasK && hasN:
-			return "на столе: ключи, конспекты. " + room.CanGoText()
-		case !hasB && !hasK && hasN:
-			return "на столе: конспекты. " + room.CanGoText()
-		case !hasB && !hasK && !hasN:
-			return "пустая комната. " + room.CanGoText()
-		default:
+		if !hasAnyItems(room) {
 			return "пустая комната. " + room.CanGoText()
 		}
+		return contentsLine(room) + ". " + room.CanGoText()
 	}
-
 	street.EnterDescFn = func(gm *entities.Game) string {
 		return "на улице весна. " + street.CanGoText()
 	}
 	street.LookDescFn = street.EnterDescFn
 
 	corridor.SpecialApply = func(gm *entities.Game, item, target string) (bool, string) {
-		if target == "дверь" {
-			if !gm.Inventory["ключи"] {
-				return true, "нет предмета в инвентаре - ключи"
+		if target == "дверь" && item == "ключи" {
+			if gm.DoorOpened {
+				return true, "дверь уже открыта"
 			}
 			gm.DoorOpened = true
 			return true, "дверь открыта"
 		}
-		return true, "не к чему применить"
+		return false, "не к чему применить"
 	}
 
 	g.Rooms = map[string]*entities.Room{

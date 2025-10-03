@@ -8,7 +8,8 @@ type Room struct {
 	LookDescFn     func(*Game) string
 	NeighborsOrder []string
 	Neighbors      map[string]*Room
-	Items          map[string]bool
+	Items          map[string]map[string]bool
+	ItemsOrder     []string
 	SpecialApply   SpecialApplyFunc
 }
 
