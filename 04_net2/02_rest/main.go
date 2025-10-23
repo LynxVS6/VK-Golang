@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.vk-golang.ru/vk-golang/lectures/04_net2/02_rest/storage"
+	"github.com/LynxVS6/VK-Golang/lectures/04_net2/02_rest/storage"
 
 	"github.com/gorilla/mux"
 )

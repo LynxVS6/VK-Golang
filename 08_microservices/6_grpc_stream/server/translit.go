@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	tr "github.com/essentialkaos/translit/v2"
-	"gitlab.vk-golang.ru/vk-golang/lectures/08_microservices/6_grpc_stream/translit"
+	"github.com/LynxVS6/VK-Golang/lectures/08_microservices/6_grpc_stream/translit"
 	"io"
 )
 

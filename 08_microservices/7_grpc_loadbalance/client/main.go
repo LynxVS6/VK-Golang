@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/resolver/manual"
 
-	"gitlab.vk-golang.ru/vk-golang/lectures/08_microservices/4_grpc/session"
+	"github.com/LynxVS6/VK-Golang/lectures/08_microservices/4_grpc/session"
 
 	consulapi "github.com/hashicorp/consul/api"
 )

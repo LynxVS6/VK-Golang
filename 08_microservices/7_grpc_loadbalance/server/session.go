@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"sync"
 
-	"gitlab.vk-golang.ru/vk-golang/lectures/08_microservices/4_grpc/session"
+	"github.com/LynxVS6/VK-Golang/lectures/08_microservices/4_grpc/session"
 
 	"golang.org/x/net/context"
 )

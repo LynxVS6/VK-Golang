@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	"gitlab.vk-golang.ru/vk-golang/lectures/08_microservices/4_grpc/session"
+	"github.com/LynxVS6/VK-Golang/lectures/08_microservices/4_grpc/session"
 )
 
 // {Interceprtor} | serialization | -> request

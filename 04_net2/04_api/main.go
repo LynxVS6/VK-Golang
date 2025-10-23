@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"gitlab.vk-golang.ru/vk-golang/lectures/04_net2/04_api/handlers"
+	"github.com/LynxVS6/VK-Golang/lectures/04_net2/04_api/handlers"
 )
 
 // GET - получение

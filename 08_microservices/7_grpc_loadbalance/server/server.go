@@ -7,7 +7,7 @@ import (
 	"net"
 	"strconv"
 
-	"gitlab.vk-golang.ru/vk-golang/lectures/08_microservices/4_grpc/session"
+	"github.com/LynxVS6/VK-Golang/lectures/08_microservices/4_grpc/session"
 
 	"google.golang.org/grpc"
 
