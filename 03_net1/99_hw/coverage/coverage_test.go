@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -289,5 +291,80 @@ func TestSearchServer_SlowQueryHook(t *testing.T) {
 	}
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+}
+
+func TestSearchServer_LimitZero(t *testing.T) {
+    ts := httptest.NewServer(http.HandlerFunc(SearchServer))
+    defer ts.Close()
+
+    req, _ := http.NewRequest("GET", ts.URL+"?limit=0", nil)
+    req.Header.Set("AccessToken", "ok")
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        t.Fatalf("do: %v", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        t.Fatalf("want 200, got %d", resp.StatusCode)
+    }
+}
+
+func TestSearchServer_BadLimit_Negative(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(SearchServer))
+	defer ts.Close()
+
+	req, _ := http.NewRequest("GET", ts.URL+"?limit=-1", nil)
+	req.Header.Set("AccessToken", "ok")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("do: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("want 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestSearchServer_OffsetBeyond_ReturnsEmpty(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(SearchServer))
+	defer ts.Close()
+
+	reqAll, _ := http.NewRequest("GET", ts.URL+"?limit=1000", nil)
+	reqAll.Header.Set("AccessToken", "ok")
+	respAll, err := http.DefaultClient.Do(reqAll)
+	if err != nil {
+		t.Fatalf("do: %v", err)
+	}
+	var all []User
+	if err := json.NewDecoder(respAll.Body).Decode(&all); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	respAll.Body.Close()
+
+	req, _ := http.NewRequest("GET",
+		ts.URL+fmt.Sprintf("?limit=5&offset=%d", len(all)+10), nil)
+	req.Header.Set("AccessToken", "ok")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("do: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var got []User
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("expected empty slice, got %d", len(got))
+	}
+}
+
+func TestFindUsers_UnknownError_NonTimeout(t *testing.T) {
+	c := &SearchClient{AccessToken: "ok", URL: "http://127.0.0.1:65534"}
+	_, err := c.FindUsers(SearchRequest{Limit: 1})
+	if err == nil || !strings.HasPrefix(err.Error(), "unknown error ") {
+		t.Fatalf("want unknown error, got %v", err)
 	}
 }
